@@ -13,6 +13,7 @@ namespace simpleCrud
         public Student[] Students { get; set; }
         public Organisation Organisation { get; set; }
 
+        
         public override string ToString()
         {
             return JsonSerializer.Serialize(this);

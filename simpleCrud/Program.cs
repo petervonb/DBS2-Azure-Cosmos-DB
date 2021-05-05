@@ -26,11 +26,11 @@ namespace simpleCrud
             //R
             await Program.QueryItemsAsync(cosmosClient);
             //U
-            //await Program.ReplaceFamilyItemAsync(cosmosClient);
+            await Program.ReplaceProgramClass(cosmosClient);
             //D
-            //await Program.DeleteFamilyItemAsync(cosmosClient);
+            await Program.DeleteSecondYear(cosmosClient);
             // Just dont 
-            //await Program.DeleteDatabaseAndCleanupAsync(cosmosClient);
+            //await Program.DeleteDatabase(cosmosClient);
         }
 
         /// Create the database if it does not exist
@@ -172,6 +172,43 @@ namespace simpleCrud
                 informaticYears.Add(program);
                 Console.WriteLine("\tRead {0}\n", program);
             }
+        }
+        
+        private static async Task ReplaceProgramClass(CosmosClient cosmosClient)
+        {
+            CosmosContainer container = cosmosClient.GetContainer(Program.DatabaseId, Program.ContainerId);
+
+            ItemResponse<ProgramClass> informaticsResponse = await container.ReadItemAsync<ProgramClass>("Informatics.1", new PartitionKey("Informatics"));
+            ProgramClass itemBody = informaticsResponse;
+    
+            // update organisation
+            itemBody.Organisation.BelongingTo = "FIBS";
+            // update grade of a student
+            itemBody.Students[0].OverallGrade = 10;
+
+            // replace the item with the updated content
+            informaticsResponse = await container.ReplaceItemAsync<ProgramClass>(itemBody, itemBody.Id, new PartitionKey(itemBody.ProgramName));
+            Console.WriteLine("Updated Program [{0},{1}].\n \tBelongs to {2} now\n ", itemBody.Organisation.BelongingTo, itemBody.Id, informaticsResponse.Value);
+        }
+        
+        private static async Task DeleteSecondYear(CosmosClient cosmosClient)
+        {
+            CosmosContainer container = cosmosClient.GetContainer(Program.DatabaseId, Program.ContainerId);
+
+            string partitionKeyValue = "Informatics";
+            string programId = "Informatics.2";
+
+            // Delete an item. Note we must provide the partition key value and id of the item to delete
+            ItemResponse<ProgramClass> informaticsResponse = await container.DeleteItemAsync<ProgramClass>(programId,new PartitionKey(partitionKeyValue));
+            Console.WriteLine("Deleted Family [{0},{1}]\n", partitionKeyValue, programId);
+        }
+        
+        private static async Task DeleteDatabase(CosmosClient cosmosClient)
+        {
+            CosmosDatabase database = cosmosClient.GetDatabase(Program.DatabaseId);
+            DatabaseResponse databaseResourceResponse = await database.DeleteAsync();
+
+            Console.WriteLine("Deleted Database: {0}\n", Program.DatabaseId);
         }
     }
 }
