@@ -21,16 +21,19 @@ namespace simpleCrud
             CosmosClient cosmosClient = new CosmosClient(EndpointUrl, AuthorizationKey);
             await Program.CreateDatabaseAsync(cosmosClient);
             await Program.CreateContainerAsync(cosmosClient);
+            //C
             await Program.AddItemsToContainerAsync(cosmosClient);
-            //await Program.QueryItemsAsync(cosmosClient);
+            //R
+            await Program.QueryItemsAsync(cosmosClient);
+            //U
             //await Program.ReplaceFamilyItemAsync(cosmosClient);
+            //D
             //await Program.DeleteFamilyItemAsync(cosmosClient);
+            // Just dont 
             //await Program.DeleteDatabaseAndCleanupAsync(cosmosClient);
         }
 
-        /// <summary>
         /// Create the database if it does not exist
-        /// </summary>
         private static async Task CreateDatabaseAsync(CosmosClient cosmosClient)
         {
             // Create a new database
@@ -38,11 +41,7 @@ namespace simpleCrud
             Console.WriteLine("Created Database: {0}\n", database.Id);
         }
 
-        /// <summary>
         /// Create the container if it does not exist. 
-        /// Specify "/LastName" as the partition key since we're storing family information, to ensure good distribution of requests and storage.
-        /// </summary>
-        /// <returns></returns>
         private static async Task CreateContainerAsync(CosmosClient cosmosClient)
         {
             // Create a new container
@@ -51,16 +50,15 @@ namespace simpleCrud
             Console.WriteLine("Created Container: {0}\n", container.Id);
         }
 
-        /// <summary>
-        /// Add Family items to the container
-        /// </summary>
+        /// Add Program Year items to the container
         private static async Task AddItemsToContainerAsync(CosmosClient cosmosClient)
         {
             // Create a programClass object for the informatics year one program
             ProgramClass informaticsOne = new ProgramClass
             {
                 Id = "Informatics.1",
-                ProgramName = "Informatics Year One",
+                ProgramName = "Informatics",
+                Year = 1,
                 Lecturers = new Lecturer[]
                 {
                     new Lecturer {LecturersName = "Holz"},
@@ -89,7 +87,6 @@ namespace simpleCrud
                     BelongingTo = "FHTenL",
                     City = "Venlo"
                 },
-                IsRegistered = false
             };
 
             CosmosContainer container = cosmosClient.GetContainer(Program.DatabaseId, Program.ContainerId);
@@ -107,18 +104,19 @@ namespace simpleCrud
                 ItemResponse<ProgramClass> informaticsClassResponse =
                     await container.CreateItemAsync<ProgramClass>(informaticsOne,
                         new PartitionKey(informaticsOne.ProgramName));
-                
+
                 // print response values
                 Console.WriteLine("Created item in database with id: {0}\n", informaticsClassResponse.Value.Id);
                 Console.WriteLine("Name: {0}\n", informaticsClassResponse.Value.ProgramName);
                 // other statements here, such as lectures, students etc 
             }
-            
+
             // Create a informatics object for the informatics year 2 
             ProgramClass informaticsTwo = new ProgramClass
             {
                 Id = "Informatics.2",
-                ProgramName = "Informatics Year Two",
+                ProgramName = "Informatics",
+                Year = 2,
                 Lecturers = new Lecturer[]
                 {
                     new Lecturer {LecturersName = "Schwake"},
@@ -147,14 +145,33 @@ namespace simpleCrud
                     BelongingTo = "FHTenL",
                     City = "Venlo"
                 },
-                IsRegistered = false
             };
 
-            ItemResponse<ProgramClass> informaticsTwoResponse = await container.UpsertItemAsync<ProgramClass>(informaticsTwo, new PartitionKey(informaticsTwo.ProgramName));
+            ItemResponse<ProgramClass> informaticsTwoResponse =
+                await container.UpsertItemAsync<ProgramClass>(informaticsTwo,
+                    new PartitionKey(informaticsTwo.ProgramName));
             Console.WriteLine("Created item in database with id: {0}\n", informaticsTwoResponse.Value.Id);
         }
+        
+  
+        /// Query program container
+        private static async Task QueryItemsAsync(CosmosClient cosmosClient)
+        {
+            var sqlQueryText = "SELECT * FROM c WHERE c.Year = 1";
 
-            
+            Console.WriteLine("Running query: {0}\n", sqlQueryText);
+
+            CosmosContainer container = cosmosClient.GetContainer(Program.DatabaseId, Program.ContainerId);
+
+            QueryDefinition queryDefinition = new QueryDefinition(sqlQueryText);
+
+            List<ProgramClass> informaticYears = new List<ProgramClass>();
+
+            await foreach (ProgramClass program in container.GetItemQueryIterator<ProgramClass>(queryDefinition))
+            {
+                informaticYears.Add(program);
+                Console.WriteLine("\tRead {0}\n", program);
+            }
         }
-    
+    }
 }

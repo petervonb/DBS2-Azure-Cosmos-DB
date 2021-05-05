@@ -7,10 +7,11 @@ namespace simpleCrud
     {
         [JsonPropertyName("id")] public string Id { get; set; }
         public string ProgramName { get; set; }
+        
+        public int Year { get; set; }
         public Lecturer[] Lecturers { get; set; }
         public Student[] Students { get; set; }
         public Organisation Organisation { get; set; }
-        public bool IsRegistered { get; set; }
 
         public override string ToString()
         {
