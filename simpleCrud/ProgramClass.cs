@@ -22,8 +22,18 @@ namespace simpleCrud
 
     public class Lecturer
     {
+        [JsonPropertyName("id")] public string Id { get; set; }
+
         public string ProgramName { get; set; }
         public string LecturersName { get; set; }
+    }
+    
+    
+    public class DumbItem
+    {
+        [JsonPropertyName("id")] public string Id { get; set; }
+        public string ProgramName { get; set; }
+        public string ItemName { get; set; }
     }
 
     public class Student
